@@ -1,6 +1,7 @@
 # include <iostream>
 # include <stdlib.h>
 # include <limits>
+# include <time.h>
 
 using namespace std;
 
@@ -200,7 +201,10 @@ int daysTillDue(const HomeworkQueue* q, const COURSE course)
     //now that I've found the time of the assignment... I need the current time (in days of the year)
     time_t currentTime;
     struct tm *myTime = localtime(&currentTime);
-    int myTotalTime = myTime->tm_yday;
+
+    int myMonth = myTime->tm_mon + 1;
+    int myDay = myTime->tm_mday;
+    int myTotalTime = myMonth*30 + myDay;
 
 
     //need to calculate the days left to when the assignment is due
