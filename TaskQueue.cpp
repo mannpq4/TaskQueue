@@ -172,6 +172,9 @@ int daysTillDue(const HomeworkQueue* q, const COURSE course)
 {
     bool found = false;
 
+    const HomeworkQueue* traverse = new HomeworkQueue;
+    traverse = q;
+
     //return value
     int daysLeft;
 
@@ -181,14 +184,14 @@ int daysTillDue(const HomeworkQueue* q, const COURSE course)
     int assgnTotalDueTime;
 
     //essentially while there is no next assignment to parse
-    while (q != NULL) {
-        if (q->assn->course == course) {
-            assgnDueDay = q->assn->dueDay;
-            assgnDueMonth = q->assn->dueMonth;
+    while (traverse != NULL) {
+        if (traverse->assn->course == course) {
+            assgnDueDay = traverse->assn->dueDay;
+            assgnDueMonth = traverse->assn->dueMonth;
             found = true;
         }
 
-        q = q->nextInQueue;
+        traverse = traverse->nextInQueue;
     }
 
     //convert the time found to number of days... operating in the assumption that a month contains ~30 days (could replace easily with a struct here)
@@ -197,7 +200,7 @@ int daysTillDue(const HomeworkQueue* q, const COURSE course)
     //now that I've found the time of the assignment... I need the current time (in days of the year)
     time_t currentTime;
     struct tm *myTime = localtime(&currentTime);
-    int myTotalTime = myTime->tm_yday - 91;
+    int myTotalTime = myTime->tm_yday;
 
 
     //need to calculate the days left to when the assignment is due
@@ -314,11 +317,9 @@ int main(const int argc, const char* const argv[]) {
     }
 
     else {
-        cout << "days remaining: " << daysLeft << " days" << std::endl;
+        cout << "days remaining: " << daysLeft << " days" << std::endl<< std::endl;
     }
 
-
-    cout << "check pointer is not null" << p_queue->assn->dueMonth << endl;
 
     //dequeue function is invoked here... after that, the queue essentially becomes null
     const Assignment* p_firstAssignmentInQueue = dequeue(p_queue);
