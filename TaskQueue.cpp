@@ -23,9 +23,6 @@ struct HomeworkQueue
     HomeworkQueue* nextInQueue;
 };
 
-
-
-
 // Function declarations; do not remove
 
 bool enqueue(HomeworkQueue*& queue, const Assignment& assignment);
@@ -56,7 +53,7 @@ bool enqueue(HomeworkQueue*& queue, const Assignment& assignment)
     myAssgn->description = assignment.description;
 
     //need to check whether or not queue has a single element in it or not
-    if (queue == NULL) {
+    if (queue->assn == NULL) {
         //create a head-pointer, and have it's assignment be myAssign;
         HomeworkQueue* headPtr = new HomeworkQueue;
         headPtr->assn = myAssgn;
@@ -71,7 +68,7 @@ bool enqueue(HomeworkQueue*& queue, const Assignment& assignment)
         enqueueSuccess = true;
     }
 
-    //if there is already a linked list... lets add the item to the very back
+        //if there is already a linked list... lets add the item to the very back
     else {
         //need to create a pointer to hold myAssign in either case... refactor this outside the if else logic
         HomeworkQueue* nextPtr = new HomeworkQueue;
@@ -81,30 +78,27 @@ bool enqueue(HomeworkQueue*& queue, const Assignment& assignment)
         //note that queue is always at the head of the linked list; thus, let the lastElem pointer transverse the list from the beginning
         //this is because we don't really know when the linked list is going to end
         HomeworkQueue* lastElem = new HomeworkQueue;
-
-
-        //as part of convention, to prevent bad memory access I'll be creating a lagging pointer
-        HomeworkQueue* laggyPointer = new HomeworkQueue;
-
         lastElem = queue;
 
         //need to put in a loop here for the nextPtr to chase the headPointer until the next is null...
         //re-point the lastElem pointer to the new end of the list
         bool found = false;
         while (!found) {
-            laggyPointer = lastElem;
             lastElem = lastElem->nextInQueue;
 
-            if (lastElem == NULL) {
+            if (lastElem->nextInQueue == NULL) {
                 found = true;
             }
         }
 
         //add the new element to the end of the queue; lastElem is on the current last element
-        laggyPointer->nextInQueue = nextPtr;
+        lastElem->nextInQueue = nextPtr;
 
         //lastElem now goes to the new last element
         //next two lines of code are essentially useless... I just need the head of the list.
+        lastElem = lastElem->nextInQueue;
+        nextPtr = nextPtr->nextInQueue;
+
 
         //clean up the memory here... because queue is the only pointer required by the end
         delete lastElem;
@@ -114,7 +108,7 @@ bool enqueue(HomeworkQueue*& queue, const Assignment& assignment)
     }
 
     /*
-     * just checking that enqueuing was done correctly
+     * checking that enqueuing was done correctly
     cout << queue->assn->course << endl;
     cout << queue->assn->dueDay << endl;
     cout << queue->assn->dueMonth << endl;
@@ -148,13 +142,11 @@ const Assignment* dequeue(HomeworkQueue*& queue)
         return NULL;
     }
 
-
     //if there is something to dequeue
     else {
         Assignment* assignReturned = new Assignment;
 
         //need the copy the header's (ie. first element in the queue into this pointer)
-
         assignReturned->course = queue->assn->course;
         assignReturned->description = queue->assn->description;
         assignReturned->dueDay = queue->assn->dueDay;
@@ -189,10 +181,11 @@ int daysTillDue(const HomeworkQueue* q, const COURSE course)
     int assgnTotalDueTime;
 
     //essentially while there is no next assignment to parse
-    while (q) {
+    while (q != NULL) {
         if (q->assn->course == course) {
             assgnDueDay = q->assn->dueDay;
             assgnDueMonth = q->assn->dueMonth;
+            found = true;
         }
 
         q = q->nextInQueue;
@@ -204,7 +197,7 @@ int daysTillDue(const HomeworkQueue* q, const COURSE course)
     //now that I've found the time of the assignment... I need the current time (in days of the year)
     time_t currentTime;
     struct tm *myTime = localtime(&currentTime);
-    int myTotalTime = myTime->tm_yday;
+    int myTotalTime = myTime->tm_yday - 91;
 
 
     //need to calculate the days left to when the assignment is due
@@ -219,7 +212,7 @@ int daysTillDue(const HomeworkQueue* q, const COURSE course)
     }
 
 
-    //returning
+    //returning the number of days left
     if (found) {
         return daysLeft;
     }
@@ -243,7 +236,7 @@ bool isEarlier(const Assignment& a1, const Assignment& a2) {
     }
 
     if (a1.dueDay <= 0 || a1.dueDay > 31 || a2.dueDay <= 0 || a2.dueDay > 31) {
-        cout << "assignment date value is invalid" << endl;
+        cerr << "assignment date value is invalid" << endl;
         return false;
     }
 
@@ -265,7 +258,7 @@ bool isEarlier(const Assignment& a1, const Assignment& a2) {
             return false;
 
         else if (a1.dueDay == a2.dueDay) {
-            if (a1.course == ECE105 && a2.course != ECE105)
+            if (a1.course == ECE105)
                 return true;
 
             else
@@ -275,6 +268,7 @@ bool isEarlier(const Assignment& a1, const Assignment& a2) {
 
     //essentially only triggered if nothing else above is triggered... equivalent to else {return false}
     return false;
+
 }
 
 int main(const int argc, const char* const argv[]) {
@@ -286,7 +280,9 @@ int main(const int argc, const char* const argv[]) {
     p_queue->nextInQueue = NULL;
     p_queue->assn = NULL;
 
-    char sampleDescription[] = "Assignment 1";
+    HomeworkQueue* p_copy = new HomeworkQueue;
+
+    char sampleDescription[] = "Sequential Execution";
     Assignment assn1 =
             {
                     .course = ECE150,
@@ -297,18 +293,34 @@ int main(const int argc, const char* const argv[]) {
             };
 
     bool enqueueSuccess = enqueue(p_queue, assn1);
+    p_copy = p_queue;
 
     if(enqueueSuccess)
     {
         std::cout << "assn1 enqueued successfully" << std::endl << std::endl;
 
     }
+
     else
     {
         std::cout << "enqueue() failed" << std::endl << std::endl;
     }
 
+    //finding how many days are left implemented
+    int daysLeft = daysTillDue(p_copy, ECE150);
 
+    if (daysLeft == INT_MAX) {
+        cout << "could not find assignment" << std::endl;
+    }
+
+    else {
+        cout << "days remaining: " << daysLeft << " days" << std::endl;
+    }
+
+
+    cout << "check pointer is not null" << p_queue->assn->dueMonth << endl;
+
+    //dequeue function is invoked here... after that, the queue essentially becomes null
     const Assignment* p_firstAssignmentInQueue = dequeue(p_queue);
 
 
@@ -326,7 +338,6 @@ int main(const int argc, const char* const argv[]) {
     {
         std::cout << "dequeue() failed" << std::endl;
     }
-
 
     delete p_queue;
 
